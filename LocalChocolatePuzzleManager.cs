@@ -9,64 +9,13 @@ using VRC.Udon;
 ///  puzzleの完成まで状態を管理する
 /// </summary>
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-public class ChocolatePuzzleManager : IChocolatePuzzleManager
+public class LocalChocolatePuzzleManager : IChocolatePuzzleManager
 {
     [SerializeField]Transform[] holes;
     private bool[] isFilled;
-    [UdonSynced]byte[] pieceCenterTileHoleIndexArrSynced=new byte[12];
-    [UdonSynced]byte[] pieceRotArrSynced=new byte[12];
-    [UdonSynced]byte[] pieceRotXZArrSynced=new byte[12];
     
     [SerializeField] private VRC_Pickup boardPickup;
-    public override void OnDeserialization()
-    {
-        Debug.Log($"OnDeserialization: {puzzleRoot.gameObject.name}");
-        Init();
-        for (byte i = 0; i < pieceCenterTileHoleIndexArrSynced.Length; i++)
-        {
-            
-            if (!changedBeforeSync[i])
-            {
-                if(pieceCenterTileHoleIndexArrSynced[i]==Byte.MaxValue)
-                {
-                    Detach(i);
-                }
-                else
-                {
-                    Detach(i);
-                    Attach(i, pieceCenterTileHoleIndexArrSynced[i], ByteToPieceRot(pieceRotArrSynced[i]),ByteToPieceXZRot(pieceRotXZArrSynced[i]));
-                }
-            }
-        }
-    }
-
-    public override void OnPlayerJoined(VRCPlayerApi player)
-    {
-        Debug.Log("OnPlayerJoined");
-        RequestSerialization();
-        SendCustomEventDelayedSeconds(nameof(RequestSerialization),0.1f);
-    }
-    public override void OnPlayerLeft(VRCPlayerApi player)
-    {
-        Debug.Log("OnPlayerLeft");
-        for (byte i = 0; i < changedBeforeSync.Length; i++)
-        {
-            changedBeforeSync[i] = false;
-        }
-        SendCustomEventDelayedSeconds(nameof(RequestSerialization),1f);
-        SendCustomEventDelayedSeconds(nameof(RequestSerialization),10f);
-    }
-
-    public override void OnPreSerialization()
-    {
-        Debug.Log("OnPreSerialization");
-        for (int i = 0; i < pieceCenterTileHoleIndexArr.Length; i++)
-        {
-            pieceCenterTileHoleIndexArrSynced[i] = pieceCenterTileHoleIndexArr[i];
-            pieceRotArrSynced[i] = PieceRotToByte(pieceRotArr[i]);
-            pieceRotXZArrSynced[i] = PieceRotXZToByte(pieceRotXZArr[i]);
-        }
-    }
+   
     [SerializeField]Canvas canvas;
     public void Reset()
     {
@@ -98,13 +47,6 @@ public class ChocolatePuzzleManager : IChocolatePuzzleManager
             pieceIDs[i]=allPieces[i].gameObject.GetInstanceID();
         }
 
-        if (Networking.IsOwner(this.gameObject))
-        {
-            for (int i = 0; i < pieceCenterTileHoleIndexArrSynced.Length; i++)
-            {
-                pieceCenterTileHoleIndexArr[i] = byte.MaxValue;
-            }
-        }
     }
 
     [SerializeField] private ChocolatePiece[] allPieces;
@@ -268,10 +210,10 @@ public class ChocolatePuzzleManager : IChocolatePuzzleManager
                 //var xOffset = piece.GetRevisedXOffset(nearestRot,xzRot,i);
                 //var zOffset = piece.GetRevisedZOffset(nearestRot,xzRot,i);
                 var offset=piece.GetRevisedOffset(nearestRot,xzRot,i);
+                //Debug.Log($"index {i} offset is {offset}");
                 var index = GetHoleIndex(holeIndex, Mathf.RoundToInt(offset.x), Mathf.RoundToInt(offset.z));
                 isFilled[index] = true;
                 fillArr[i]=index;
-                //Debug.Log($"index {i} offset is {offset}");
                 //Debug.Log($"fill hole index is {index}");
                 //piece.Tiles[i].position = holes[index].position;
             }
@@ -308,7 +250,7 @@ public class ChocolatePuzzleManager : IChocolatePuzzleManager
                 ps.Play();
             }
         }
-       
+        
     }
 
     public override bool Attach(ChocolatePiece piece)
@@ -324,8 +266,8 @@ public class ChocolatePuzzleManager : IChocolatePuzzleManager
         var closestEuler = piece.FindClosestEulerAngle();
         var nearestRot=piece.GetNearestPieceRot(closestEuler);
         var nearestXZRot=piece.GetNearestPieceXZRot(closestEuler);
-        Debug.Log($"nearest rot is {nearestRot} player id is {Networking.LocalPlayer.playerId}");
-        Debug.Log($"nearest xzRot is {nearestXZRot} player id is {Networking.LocalPlayer.playerId}");
+        Debug.Log($"nearest rot is {nearestRot}");
+        Debug.Log($"nearest xzRot is {nearestXZRot}");
         
         return Attach(piece, nearestHoleIndex,nearestRot,nearestXZRot);
     }

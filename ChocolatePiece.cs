@@ -15,6 +15,14 @@ public enum PieceRot
     Rot270
 }
 
+public enum PieceXZRot
+{
+    Rot0,
+    RotX,
+    RotZ,
+    RotXZ,
+}
+
 [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class ChocolatePiece : UdonSharpBehaviour
 {
@@ -24,10 +32,11 @@ public class ChocolatePiece : UdonSharpBehaviour
     [SerializeField] private int[] zOffsets;
     public Transform CenterTile => tiles[0];
     public int PieceLength => xOffsets.Length;
-    public int index;
-    PieceRot GetNearestPieceRot(Quaternion rot)
+    public byte index{get;private set;}
+    PieceRot GetNearestPieceRot(float rotY)
     {
-        var rotY=rot.eulerAngles.y;
+        //Debug.Log($"euler {rot.eulerAngles}");
+        //var rotY=rot.eulerAngles.y;
         if(rotY<45||rotY>=315)
         {
             return PieceRot.Rot0;
@@ -45,100 +54,284 @@ public class ChocolatePiece : UdonSharpBehaviour
             return PieceRot.Rot270;
         }
     }
-    public PieceRot GetNearestPieceRot()
+
+    bool isReverse(float angle)
     {
-        var selfRot = (int)GetNearestPieceRot(transform.localRotation);
-        var childRot=(int)GetNearestPieceRot(child.localRotation);
+        if (angle<90) return false;
+        if (angle<270) return true; 
+        return false;
+    }
+    public PieceXZRot GetNearestPieceXZRot(Vector3 closestEuler)
+    {
+        //var closestEuler= FindClosestEulerAngle(transform.localRotation*child.localRotation);
+        var rotX = closestEuler.x;//transform.localRotation.eulerAngles.x;
+        var rotZ = closestEuler.z;//transform.localRotation.eulerAngles.z;
+        Debug.Log($"euler xz {transform.localRotation.eulerAngles}");
+        int isRotX= isReverse(rotX)?1:0;
+        int isRotZ= isReverse(rotZ)?1:0;
+        switch(isRotX+isRotZ*2)
+        {
+            case 0:
+                return PieceXZRot.Rot0;
+            case 1:
+                return PieceXZRot.RotX;
+            case 2:
+                return PieceXZRot.RotZ;
+            case 3:
+                return PieceXZRot.RotXZ;
+            default:
+                Debug.LogError("Invalid PieceXZRot");
+                return PieceXZRot.Rot0;
+        }
+    }
+
+    public PieceRot GetNearestPieceRot(Vector3 closestEuler)
+    {
+        //var closestEuler= FindClosestEulerAngle(transform.localRotation*child.localRotation);
+        return GetNearestPieceRot(closestEuler.y);
+        var selfRot = (int)GetNearestPieceRot(transform.localRotation.eulerAngles.y);
+        var childRot=(int)GetNearestPieceRot(child.localRotation.eulerAngles.y);
+        Debug.Log($"GetNearestPieceRot selfRot:{selfRot} childRot:{childRot}");
         return (PieceRot)((selfRot+childRot)%4);
        
     }
 
-    public void SetPieceRotToTransformRot(PieceRot rot)
+    public Vector3 FindClosestEulerAngle()
     {
-        child.localRotation = Quaternion.Euler(0,0,0);
+        return FindClosestEulerAngle(transform.localRotation);
+    }
+    Vector3 FindClosestEulerAngle(Quaternion directionQ)
+    {
+        var direction = directionQ * Vector3.one;
+        Vector3 closestEuler = Vector3.zero;
+        float maxDot = float.MinValue;
+        //Debug.Log($"direction {direction}");
+        foreach (Vector3 euler in eulerAngles)
+        {
+            Quaternion rotation = Quaternion.Euler(euler);
+            Vector3 dir = rotation * Vector3.one;
+            float dot = Vector3.Dot(direction.normalized, dir.normalized);
+            //Debug.Log($"calc dir {dir} dot {dot} euler {euler}");
+            // 内積が最大のものを探す
+            if (dot > maxDot)
+            {
+                maxDot = dot;
+                closestEuler = euler;
+            }
+        }
+
+        return closestEuler;
+    }
+    private Vector3[] eulerAngles = new Vector3[]
+    {
+        new Vector3(0, 0, 0),
+        new Vector3(0, 90, 0),
+        new Vector3(0, 180, 0),
+        new Vector3(0, 270, 0),
+        new Vector3(180, 0, 0),
+        new Vector3(180, 90, 0),
+        new Vector3(180, 180, 0),
+        new Vector3(180, 270, 0),
+        new Vector3(0, 0, 180),
+        new Vector3(0, 90, 180),
+        new Vector3(0, 180, 180),
+        new Vector3(0, 270, 180),
+        new Vector3(180, 0, 180),
+        new Vector3(180, 90, 180),
+        new Vector3(180, 180, 180),
+        new Vector3(180, 270, 180),
+    };
+
+    Quaternion GetQuaternionFromPieceRot(PieceRot rot, PieceXZRot xzRot)
+    {
+        var xEuler = 0;
+        var zEuler = 0;
+        switch (xzRot)
+        {
+            case PieceXZRot.Rot0:
+                xEuler = 0;
+                zEuler = 0;
+                break;
+            case PieceXZRot.RotX:
+                xEuler = 180;
+                zEuler = 0;
+                break;
+            case PieceXZRot.RotZ:
+                xEuler = 0;
+                zEuler = 180;
+                break;
+            case PieceXZRot.RotXZ:
+                xEuler = 180;
+                zEuler = 180;
+                break;
+        }
         switch (rot)
         {
             case PieceRot.Rot0:
-                transform.localRotation = Quaternion.Euler(0,0,0);
-                break;
+                return Quaternion.Euler(xEuler,0,zEuler);
             case PieceRot.Rot90:
-                transform.localRotation = Quaternion.Euler(0,90,0);
-                break;
+                return Quaternion.Euler(xEuler,90,zEuler);
             case PieceRot.Rot180:
-                transform.localRotation = Quaternion.Euler(0,180,0);
-                break;
+                return Quaternion.Euler(xEuler,180,zEuler);
             case PieceRot.Rot270:
-                transform.localRotation = Quaternion.Euler(0,270,0);
-                break;
+                return Quaternion.Euler(xEuler,270,zEuler);
             default:
-                Debug.LogError("Invalid PieceRot");
-                break;
+                return Quaternion.identity;
         }
-        
     }
-   
-    public int GetRevisedXOffset(PieceRot pieceRot,int index)
+    public void SetPieceRotToTransformRot(PieceRot rot,PieceXZRot xzRot)
     {
-        switch (pieceRot)
-        {
-            case PieceRot.Rot0:
-                return xOffsets[index];
-            case PieceRot.Rot90:
-                return zOffsets[index];
-            case PieceRot.Rot180:
-                return -xOffsets[index];
-            case PieceRot.Rot270:
-                return -zOffsets[index];
-            default:
-                Debug.LogError("Invalid PieceRot");
-                return 0;
-        }
+        //child.localRotation = Quaternion.Euler(0,0,0);
+        //child.localPosition = Vector3.zero;
+        transform.localRotation = GetQuaternionFromPieceRot(rot,xzRot);
+       
     }
-    public int GetRevisedZOffset(PieceRot pieceRot,int index)
-    {
-        switch (pieceRot)
-        {
-            case PieceRot.Rot0:
-                return zOffsets[index];
-            case PieceRot.Rot90:
-                return -xOffsets[index];
-            case PieceRot.Rot180:
-                return -zOffsets[index];
-            case PieceRot.Rot270:
-                return xOffsets[index];
-            default:
-                Debug.LogError("Invalid PieceRot");
-                return 0;
-        }
-    }
-    [SerializeField]ChocolatePuzzleManager manager;
 
+    bool isXRot(PieceXZRot rot)
+    {
+        return rot == PieceXZRot.RotX || rot == PieceXZRot.RotXZ;
+    }
+    bool isZRot(PieceXZRot rot)
+    {
+        return rot == PieceXZRot.RotZ || rot == PieceXZRot.RotXZ;
+    }
+
+    public Vector3 GetRevisedOffset(PieceRot pieceRot, PieceXZRot pieceXZRot, int index)
+    {
+        var q=GetQuaternionFromPieceRot(pieceRot,pieceXZRot);
+        return q * new Vector3(xOffsets[index], 0, zOffsets[index]);
+    }
+    /*
+     public int GetRevisedXOffset(PieceRot pieceRot, PieceXZRot pieceXZRot, int index)
+    {
+        var q=GetQuaternionFromPieceRot(pieceRot,pieceXZRot);
+        switch (pieceRot)
+        {
+            case PieceRot.Rot0:
+                return xOffsets[index] * (isXRot(pieceXZRot) ? -1 : 1);
+            case PieceRot.Rot90:
+                return zOffsets[index] * (isXRot(pieceXZRot) ? -1 : 1);
+            case PieceRot.Rot180:
+                return -xOffsets[index] * (isXRot(pieceXZRot) ? -1 : 1);
+            case PieceRot.Rot270:
+                return -zOffsets[index] * (isXRot(pieceXZRot) ? -1 : 1);
+            default:
+                Debug.LogError("Invalid PieceRot");
+                return 0;
+        }
+    }
+    public int GetRevisedZOffset(PieceRot pieceRot,PieceXZRot pieceXZRot,int index)
+    {
+        switch (pieceRot)
+        {
+            case PieceRot.Rot0:
+                return zOffsets[index] * (isZRot(pieceXZRot) ? -1 : 1) ;
+            case PieceRot.Rot90:
+                return -xOffsets[index] * (isZRot(pieceXZRot) ? -1 : 1) ;
+            case PieceRot.Rot180:
+                return -zOffsets[index] * (isZRot(pieceXZRot) ? -1 : 1) ;
+            case PieceRot.Rot270:
+                return xOffsets[index] * (isZRot(pieceXZRot) ? -1 : 1) ;
+            default:
+                Debug.LogError("Invalid PieceRot");
+                return 0;
+        }
+    }
+    */
+    public void Reset()
+    {
+        Detach();
+        transform.localPosition=initLocalPos;
+        transform.localRotation=Quaternion.identity;
+        child.localRotation=Quaternion.identity;
+        child.localPosition=Vector3.zero;
+    }
+
+    public void ResetChild()
+    {
+        child.localRotation=Quaternion.identity;
+    }
+
+    private Vector3 initLocalPos;
+    public void Init(byte i)
+    {
+        index=i;
+        initLocalPos = transform.localPosition;
+    }
+
+    
+    [SerializeField]IChocolatePuzzleManager manager;
+    public bool IsAttached => _isAttached;
+    bool _isAttached;
     public void Attach()
     {
         manager.Attach(this);
+        _isAttached=true;
     }
     public void Detach()
     {
         manager.Detach(this);
+        _isAttached = false;
     }
+    [SerializeField]private float autoReturnThreshold=45f;
+    private float AutoReturnThreshold => autoReturnThreshold * manager.PuzzleRoot.transform.localScale.x;
     public override void OnDrop()
     {        
-        SendCustomNetworkEvent(NetworkEventTarget.All,nameof(Attach));
+        this.transform.rotation*=child.localRotation;
+        child.localRotation=Quaternion.identity;
+        //SendCustomNetworkEvent(NetworkEventTarget.All,nameof(Attach));
+        Attach();
+        if(Vector3.Distance(manager.PuzzlePickupable.transform.position,transform.position)>AutoReturnThreshold)
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.All,nameof(Reset));
+        }
+        //Debug.Log("Ondrop IsFront:"+IsFront());
     }
     public override void OnPickup()
     {
         SendCustomNetworkEvent(NetworkEventTarget.All,nameof(Detach));
     }
-
+    
     public void Rot90()
     {
-        child.localRotation *= Quaternion.Euler(0,90,0);
+        child.localRotation = Quaternion.Euler(0,90,0);
+        localRot=PieceRot.Rot90;
+    }
+    public void Rot180()
+    {
+        child.localRotation = Quaternion.Euler(0,180,0);
+        localRot=PieceRot.Rot180;
+    }
+    public void Rot270()
+    {
+        child.localRotation = Quaternion.Euler(0,270,0);
+        localRot=PieceRot.Rot270;
+    }
+    public void Rot0()
+    {
+        child.localRotation = Quaternion.Euler(0,0,0);
+        localRot=PieceRot.Rot0;
     }
 
+    private PieceRot localRot=PieceRot.Rot0;
     [SerializeField] private Transform child;
     public override void OnPickupUseDown()
     {
-        SendCustomNetworkEvent(NetworkEventTarget.All,nameof(Rot90));
+        switch (localRot)
+        {
+            case PieceRot.Rot0:
+                SendCustomNetworkEvent(NetworkEventTarget.All,nameof(Rot90));
+                break;
+            case PieceRot.Rot90:
+                SendCustomNetworkEvent(NetworkEventTarget.All,nameof(Rot180));
+                break;
+            case PieceRot.Rot180:
+                SendCustomNetworkEvent(NetworkEventTarget.All,nameof(Rot270));
+                break;
+            case PieceRot.Rot270:
+                SendCustomNetworkEvent(NetworkEventTarget.All,nameof(Rot0));
+                break;
+        }
     }
 
     [SerializeField] private float tileSize = 2;

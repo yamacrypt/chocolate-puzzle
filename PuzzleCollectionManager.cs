@@ -12,43 +12,69 @@ public class PuzzleCollectionManager : UdonSharpBehaviour
 
     [SerializeField] private Transform[] allPieces;
 
-    public void Show(byte[] pieceCenterTileHoleIndexArr,PieceRot[] rotArr)
+    public void Show(byte[] pieceCenterTileHoleIndexArr,PieceRot[] rotArr,PieceXZRot[] rotXZArr)
     {
         for (byte i = 0; i < pieceCenterTileHoleIndexArr.Length; i++)
         {
             var holeIndex = pieceCenterTileHoleIndexArr[i];
-            var rot = rotArr[i];
-            Attach(i, holeIndex, rot);
+            Attach(i, holeIndex, rotArr[i],rotXZArr[i]);
+        }
+    }
+    public void Hide()
+    {
+        for (int i = 0; i < allPieces.Length; i++)
+        {
+            allPieces[i].gameObject.SetActive(false);
         }
     }
 
     private const int xMax = 10;
     private const int yMax = 6;
   
-    public bool Attach(byte pieceIndex, byte holeIndex,PieceRot rot)
+    public bool Attach(byte pieceIndex, byte holeIndex,PieceRot rot,PieceXZRot xzRot)
     {
-        return Attach(allPieces[pieceIndex], holeIndex,rot);
+        return Attach(allPieces[pieceIndex], holeIndex,rot,xzRot);
     }
-    bool Attach(Transform piece, byte holeIndex,PieceRot nearestRot)
+    Quaternion GetQuaternionFromPieceRot(PieceRot rot, PieceXZRot xzRot)
     {
-        switch (nearestRot)
+        var xEuler = 0;
+        var zEuler = 0;
+        switch (xzRot)
         {
-            case PieceRot.Rot0:
-                piece.transform.localRotation = Quaternion.Euler(0,0,0);
+            case PieceXZRot.Rot0:
+                xEuler = 0;
+                zEuler = 0;
                 break;
-            case PieceRot.Rot90:
-                piece.transform.localRotation = Quaternion.Euler(0,90,0);
+            case PieceXZRot.RotX:
+                xEuler = 180;
+                zEuler = 0;
                 break;
-            case PieceRot.Rot180:
-                piece.transform.localRotation = Quaternion.Euler(0,180,0);
+            case PieceXZRot.RotZ:
+                xEuler = 0;
+                zEuler = 180;
                 break;
-            case PieceRot.Rot270:
-                piece.transform.localRotation = Quaternion.Euler(0,270,0);
-                break;
-            default:
-                Debug.LogError("Invalid PieceRot");
+            case PieceXZRot.RotXZ:
+                xEuler = 180;
+                zEuler = 180;
                 break;
         }
+        switch (rot)
+        {
+            case PieceRot.Rot0:
+                return Quaternion.Euler(xEuler,0,zEuler);
+            case PieceRot.Rot90:
+                return Quaternion.Euler(xEuler,90,zEuler);
+            case PieceRot.Rot180:
+                return Quaternion.Euler(xEuler,180,zEuler);
+            case PieceRot.Rot270:
+                return Quaternion.Euler(xEuler,270,zEuler);
+            default:
+                return Quaternion.identity;
+        }
+    }
+    bool Attach(Transform piece, byte holeIndex,PieceRot nearestRot,PieceXZRot nearestXZRot)
+    {
+        piece.transform.localRotation = GetQuaternionFromPieceRot(nearestRot, nearestXZRot);
         //var centerDiff=holes[holeIndex].position-piece.position;
         piece.transform.position = holes[holeIndex].position;
         piece.gameObject.SetActive(true);

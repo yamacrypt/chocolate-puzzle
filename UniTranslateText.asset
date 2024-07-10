@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c333ccfdd0cbdbc4ca30cef2dd6e6b9b, type: 3}
-  m_Name: WorldInit
+  m_Name: UniTranslateText
   m_EditorClassIdentifier: 
-  serializedUdonProgramAsset: {fileID: 11400000, guid: 96403e55fdb3a1548a34a70697bf9971,
+  serializedUdonProgramAsset: {fileID: 11400000, guid: 0b4777a002293a046b2bc806cc93b9be,
     type: 2}
   udonAssembly: 
   assemblyError: 
-  sourceCsScript: {fileID: 11500000, guid: 15e98a5f928d8774d845453995a4e09f, type: 3}
+  sourceCsScript: {fileID: 11500000, guid: 68420602eddcded4ebdd15ef75776c30, type: 3}
   scriptVersion: 2
   compiledVersion: 2
   behaviourSyncMode: 4
   hasInteractEvent: 0
-  scriptID: -8546872120674564920
+  scriptID: 7715910140107986150
   serializationData:
     SerializedFormat: 2
     SerializedBytes: 
@@ -50,19 +50,19 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: puzzleManager
+      Data: translateManager
     - Name: $v
       Entry: 7
       Data: 2|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: puzzleManager
+      Data: translateManager
     - Name: <UserType>k__BackingField
       Entry: 7
       Data: 3|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: IChocolatePuzzleManager, Assembly-CSharp
+      Data: UdonLab.TranslateManager, Assembly-CSharp
     - Name: 
       Entry: 8
       Data: 
@@ -116,19 +116,19 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: pieceInfos
+      Data: jp
     - Name: $v
       Entry: 7
       Data: 7|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: pieceInfos
+      Data: jp
     - Name: <UserType>k__BackingField
       Entry: 7
       Data: 8|System.RuntimeType, mscorlib
     - Name: 
       Entry: 1
-      Data: UnityEngine.Vector4[], UnityEngine.CoreModule
+      Data: System.String, mscorlib
     - Name: 
       Entry: 8
       Data: 
@@ -152,10 +152,22 @@ MonoBehaviour:
       Data: 9|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
-      Data: 1
+      Data: 2
     - Name: 
       Entry: 7
       Data: 10|UnityEngine.SerializeField, UnityEngine.CoreModule
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 11|UnityEngine.TextAreaAttribute, UnityEngine.CoreModule
+    - Name: minLines
+      Entry: 3
+      Data: 3
+    - Name: maxLines
+      Entry: 3
+      Data: 10
     - Name: 
       Entry: 8
       Data: 
@@ -176,25 +188,19 @@ MonoBehaviour:
       Data: 
     - Name: $k
       Entry: 1
-      Data: dataManager
+      Data: en
     - Name: $v
       Entry: 7
-      Data: 11|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
+      Data: 12|UdonSharp.Compiler.FieldDefinition, UdonSharp.Editor
     - Name: <Name>k__BackingField
       Entry: 1
-      Data: dataManager
+      Data: en
     - Name: <UserType>k__BackingField
-      Entry: 7
-      Data: 12|System.RuntimeType, mscorlib
-    - Name: 
-      Entry: 1
-      Data: ChocolatePuzzleDataManager, Assembly-CSharp
-    - Name: 
-      Entry: 8
-      Data: 
+      Entry: 9
+      Data: 8
     - Name: <SystemType>k__BackingField
       Entry: 9
-      Data: 4
+      Data: 8
     - Name: <SyncMode>k__BackingField
       Entry: 7
       Data: System.Nullable`1[[UdonSharp.UdonSyncMode, UdonSharp.Runtime]], mscorlib
@@ -212,10 +218,22 @@ MonoBehaviour:
       Data: 13|System.Collections.Generic.List`1[[System.Attribute, mscorlib]], mscorlib
     - Name: 
       Entry: 12
-      Data: 1
+      Data: 2
     - Name: 
       Entry: 7
       Data: 14|UnityEngine.SerializeField, UnityEngine.CoreModule
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 15|UnityEngine.TextAreaAttribute, UnityEngine.CoreModule
+    - Name: minLines
+      Entry: 3
+      Data: 3
+    - Name: maxLines
+      Entry: 3
+      Data: 10
     - Name: 
       Entry: 8
       Data: 
